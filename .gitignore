@@ -1,10 +1,101 @@
-/_build
-/cover
-/deps
-/doc
-/.fetch
-erl_crash.dump
-*.ez
-*.beam
-/config/*.secret.exs
-.elixir_ls/
+import numpy as np
+import random
+
+# Define the gridworld environment
+class GridWorld:
+    def __init__(self, size, start, goal):
+        self.size = size  # Size of the grid
+        self.start = start  # Starting position
+        self.goal = goal  # Goal position
+        self.state = start  # Initial state
+
+    def reset(self):
+        self.state = self.start  # Reset the state to the start position
+        return self.state
+
+    def step(self, action):
+        # Define movement based on actions: 0=up, 1=right, 2=down, 3=left
+        row, col = self.state
+        if action == 0:  # up
+            row = max(0, row - 1)
+        elif action == 1:  # right
+            col = min(self.size[1] - 1, col + 1)
+        elif action == 2:  # down
+            row = min(self.size[0] - 1, row + 1)
+        elif action == 3:  # left
+            col = max(0, col - 1)
+        
+        new_state = (row, col)
+        reward = -1  # Default reward is negative to encourage reaching the goal
+        done = False
+        
+        # If the agent reaches the goal, it gets a positive reward and the episode ends
+        if new_state == self.goal:
+            reward = 100
+            done = True
+        
+        self.state = new_state
+        return new_state, reward, done
+
+# Q-learning agent
+class QLearningAgent:
+    def __init__(self, action_space, learning_rate=0.1, discount_factor=0.9, epsilon=0.1):
+        self.action_space = action_space  # Number of actions the agent can take
+        self.learning_rate = learning_rate  # Alpha in the Q-learning equation
+        self.discount_factor = discount_factor  # Gamma in the Q-learning equation
+        self.epsilon = epsilon  # Exploration rate
+        self.q_table = {}  # Q-table to store Q-values for state-action pairs
+
+    def get_q_value(self, state, action):
+        if state not in self.q_table:
+            self.q_table[state] = np.zeros(self.action_space)  # Initialize the Q-table for new states
+        return self.q_table[state][action]
+
+    def update_q_value(self, state, action, reward, next_state):
+        current_q_value = self.get_q_value(state, action)
+        max_future_q = np.max(self.q_table.get(next_state, np.zeros(self.action_space)))
+        new_q_value = current_q_value + self.learning_rate * (reward + self.discount_factor * max_future_q - current_q_value)
+        self.q_table[state][action] = new_q_value
+
+    def choose_action(self, state):
+        if random.uniform(0, 1) < self.epsilon:  # Exploration: choose a random action
+            return random.choice(range(self.action_space))
+        else:  # Exploitation: choose the action with the highest Q-value
+            return np.argmax(self.q_table.get(state, np.zeros(self.action_space)))
+
+# Initialize environment and agent
+grid_size = (5, 5)
+start_position = (0, 0)
+goal_position = (4, 4)
+env = GridWorld(grid_size, start_position, goal_position)
+
+# Agent configuration
+agent = QLearningAgent(action_space=4, learning_rate=0.1, discount_factor=0.9, epsilon=0.1)
+
+# Training loop
+episodes = 1000
+for episode in range(episodes):
+    state = env.reset()  # Reset the environment at the start of each episode
+    done = False
+    total_reward = 0
+    
+    while not done:
+        action = agent.choose_action(state)  # Choose an action based on the current state
+        next_state, reward, done = env.step(action)  # Take the action in the environment
+        agent.update_q_value(state, action, reward, next_state)  # Update Q-value using the Q-learning rule
+        state = next_state  # Move to the next state
+        total_reward += reward
+    
+    if episode % 100 == 0:
+        print(f"Episode {episode}, Total Reward: {total_reward}")
+
+# After training, test the agent
+state = env.reset()
+done = False
+steps = 0
+while not done:
+    action = agent.choose_action(state)
+    state, reward, done = env.step(action)
+    steps += 1
+
+print(f"Test completed in {steps} steps, final state: {state}")
