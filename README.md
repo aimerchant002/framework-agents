@@ -2,7 +2,7 @@
 framework agents AI made easy. Create &amp; launch (no coding!) with our full-stack web app-Deepseek, Google, OpenAI
 framework agent is a software architecture designed to facilitate the creation, deployment, and management of intelligent agents. These agents can perform tasks autonomously, learn from their environment, adapt to changing conditions, and make decisions based on data input.
 
-Key Components of an AI Agent Framework:
+Key Components of an Framework agent:
 Agent Architecture: The overall structure that defines how an agent processes inputs, makes decisions, and takes actions. This may include elements such as sensors (to collect information), actuators (to perform actions), and a decision-making process (such as rule-based systems or machine learning models).
 
 Perception Module: This component allows the agent to gather information from the environment. It can involve processing data from sensors, user inputs, or other external sources.
